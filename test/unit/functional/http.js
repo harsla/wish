@@ -21,4 +21,18 @@ suite('functional-http', function () {
       }
     }));
 
+  test('context responder', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_OK,
+        payload: "{}"
+      }
+    }));
+
 });
