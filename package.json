@@ -1,6 +1,11 @@
 { "name": "wish-framework",
-  "version": "0.0.0",
+  "version":  "0.0.0",
   "dependencies": {
+    "underscore": "1.5.2",
+    "express": "3.4.4"
+  },
+  "devDependencies": {
+    "mocha": "1.14.0"
   },
   "engines": {
     "node": "0.10.22",
