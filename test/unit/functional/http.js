@@ -35,4 +35,44 @@ suite('functional-http', function () {
       }
     }));
 
+  test('context responder with payload', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext,
+      function (context, callback) {
+        context.x = 3;
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_OK,
+        payload: "{\"x\":3}"
+      }
+    }));
+
+  test('multiple processors', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext,
+      function (context, callback) {
+        context.x = 3;
+        callback(undefined, context);
+      },
+      function (context, callback) {
+        context.y = 5;
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_OK,
+        payload: "{\"x\":3,\"y\":5}"
+      }
+    }));
+
 });
