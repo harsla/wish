@@ -4,12 +4,14 @@ var niceTests = require("../../utils/nice-tests.js"),
   constants = require("../../../lib/constants.js"),
   wish = require("../../../lib/wish.js");
 
+wish.log.level = constants.LOG_WARN;
+
 suite('functional-http', function () {
 
   var TEST_PATH = "/foo";
 
   test('basic service', niceTests.createAndTestService(function (app) {
-    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondOk));
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder()));
   },
     {
       request: {
