@@ -31,7 +31,7 @@ suite('functional-http', function () {
       },
       response: {
         statusCode: constants.HTTP_OK,
-        payload: "{}"
+        payload: {}
       }
     }));
 
@@ -49,7 +49,9 @@ suite('functional-http', function () {
       },
       response: {
         statusCode: constants.HTTP_OK,
-        payload: "{\"x\":3}"
+        payload: {
+          x: 3
+        }
       }
     }));
 
@@ -71,7 +73,10 @@ suite('functional-http', function () {
       },
       response: {
         statusCode: constants.HTTP_OK,
-        payload: "{\"x\":3,\"y\":5}"
+        payload: {
+          x: 3,
+          y: 5
+        }
       }
     }));
 
