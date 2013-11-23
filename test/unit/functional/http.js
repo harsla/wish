@@ -22,7 +22,7 @@ suite('functional-http', function () {
     }));
 
   test('context responder', niceTests.createAndTestService(function (app) {
-    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext));
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder()));
   },
     {
       request: {
@@ -36,7 +36,7 @@ suite('functional-http', function () {
     }));
 
   test('context responder with payload', niceTests.createAndTestService(function (app) {
-    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext,
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
       function (context, callback) {
         context.x = 3;
         callback(undefined, context);
@@ -56,7 +56,7 @@ suite('functional-http', function () {
     }));
 
   test('multiple processors', niceTests.createAndTestService(function (app) {
-    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.respondWithContext,
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
       function (context, callback) {
         context.x = 3;
         callback(undefined, context);
@@ -77,6 +77,59 @@ suite('functional-http', function () {
           x: 3,
           y: 5
         }
+      }
+    }));
+
+  test('numeric error response', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      function (context, callback) {
+        callback(constants.HTTP_INTERNAL_SERVER_ERROR, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_INTERNAL_SERVER_ERROR,
+        payload: ""
+      }
+    }));
+
+  test('object error response', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      function (context, callback) {
+        callback(wish.generateError(constants.HTTP_INTERNAL_SERVER_ERROR, "something bad happened"), context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_INTERNAL_SERVER_ERROR,
+        payload: {
+          error: "something bad happened"
+        }
+      }
+    }));
+
+  test('not found error', niceTests.createAndTestService(function (app) {
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      function (context, callback) {
+        callback(constants.HTTP_NOT_FOUND, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_GET,
+        path: TEST_PATH
+      },
+      response: {
+        statusCode: constants.HTTP_NOT_FOUND,
+        payload: ""
       }
     }));
 
