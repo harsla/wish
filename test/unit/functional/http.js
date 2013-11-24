@@ -4,7 +4,7 @@ var niceTests = require("../../utils/nice-tests.js"),
   constants = require("../../../lib/constants.js"),
   wish = require("../../../lib/wish.js");
 
-wish.log.level = constants.LOG_DEBUG;
+wish.log.level = constants.LOG_WARN;
 
 suite('functional-http', function () {
 
@@ -136,16 +136,16 @@ suite('functional-http', function () {
     }));
 
   test('short circuit processors', niceTests.createAndTestService(function (app) {
-      app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
-        function (context, callback) {
-          context.x = 3;
-          callback(constants.SHORT_CIRCUIT_PROCESSORS, context);
-        },
-        function (context, callback) {
-          context.y = 5;
-          callback(undefined, context);
-        }));
-    },
+    app.get(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      function (context, callback) {
+        context.x = 3;
+        callback(constants.SHORT_CIRCUIT_PROCESSORS, context);
+      },
+      function (context, callback) {
+        context.y = 5;
+        callback(undefined, context);
+      }));
+  },
     {
       request: {
         method: constants.HTTP_GET,

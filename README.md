@@ -46,6 +46,5 @@ Cries for change, screams of anger, or pleas for mercy shall are doomed to fall 
 2. SQL code should live alongside business logic rather than being segregated or abstracted away.
 3. Human meatbrains should be allowed to express logic in an imperative form.
 4. Test-Driven Development is the key to a well-engineered software solution.
-5. Database portability isn't important. MySQL is owned by evil men. PostgreSQL is an amazing product.
-6. High-level documentation and self-documenting code is critical. Code comments, not so much.
-7. Common tasks must be trivial. Uncommon tasks must be easy. Rare tasks must be possible.
+5. High-level documentation and self-documenting code is critical. Code comments, not so much.
+6. Common tasks must be trivial. Uncommon tasks must be easy. Rare tasks must be possible.
