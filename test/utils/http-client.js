@@ -3,8 +3,8 @@ var _ = require("underscore"),
   http = require("http"),
   http_client = module.exports;
 
-http_client.request = function (method, host, port, path, callback) {
-  var request = http.request({ method: method, hostname: host, port: port, path: path },
+http_client.request = function (method, host, port, path, headers, body, callback) {
+  var request = http.request({ method: method, hostname: host, port: port, path: path, headers: headers },
     function (response) {
       var friendlyResponse = {
         statusCode: response.statusCode,
@@ -23,7 +23,7 @@ http_client.request = function (method, host, port, path, callback) {
     console.log("error!!", error);
   });
 
-  request.end();
+  request.end(body);
 };
 
 
