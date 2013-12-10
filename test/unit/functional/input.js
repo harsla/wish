@@ -107,4 +107,26 @@ suite('functional-input', function () {
       }
     }));
 
+  test('unexpected input => HTTP 400 bad request', niceTests.createAndTestService(function (app) {
+    app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
+      wish.acceptInput(wish.generateSchema({
+        "bar": {
+          "type": "string"
+        }
+      })),
+      function (context, callback) {
+        context.internal.input.bar.should.equal("baz");
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_POST,
+        path: TEST_PATH + "?bar=baz&fizz=buzz"
+      },
+      response: {
+        statusCode: constants.HTTP_BAD_REQUEST
+      }
+    }));
+
 });
