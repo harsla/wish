@@ -182,4 +182,33 @@ suite('functional-input', function () {
       }
     }));
 
+  test('objects in json posts', niceTests.createAndTestService(function (app) {
+    app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
+      wish.acceptInput({
+        "a": {
+          "type": "object",
+          "properties": {
+            "b": { "type": "integer"}
+          }
+        }
+      }),
+      function (context, callback) {
+        context.internal.input.a.b.should.equal(7);
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_POST,
+        path: TEST_PATH,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: "{\"a\":{\"b\":7}}"
+      },
+      response: {
+        statusCode: constants.HTTP_OK
+      }
+    }));
+
 });
