@@ -155,4 +155,31 @@ suite('functional-input', function () {
       }
     }));
 
+  test('coerce types in string-based input content based upon schema', niceTests.createAndTestService(function (app) {
+    app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
+      wish.acceptInput({
+        "int": { "type": "integer" },
+        "num": { "type": "number" },
+        "tr":  { "type": "boolean" },
+        "fl":  { "type": "boolean" }
+      }),
+      function (context, callback) {
+        context.internal.input.int.should.equal(5);
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_POST,
+        path: TEST_PATH,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: "int=5&num=3.14&tr=true&fl=false"
+      },
+      response: {
+        statusCode: constants.HTTP_OK
+      }
+    }));
+
 });
