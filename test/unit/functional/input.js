@@ -129,4 +129,30 @@ suite('functional-input', function () {
       }
     }));
 
+  test('query input overrides body input', niceTests.createAndTestService(function (app) {
+    app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
+      wish.acceptInput({
+        "bar": {
+          "type": "string"
+        }
+      }),
+      function (context, callback) {
+        context.internal.input.bar.should.equal("baz");
+        callback(undefined, context);
+      }));
+  },
+    {
+      request: {
+        method: constants.HTTP_POST,
+        path: TEST_PATH + "?bar=baz",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: "{\"bar\":\"boop\"}"
+      },
+      response: {
+        statusCode: constants.HTTP_OK
+      }
+    }));
+
 });
