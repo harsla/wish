@@ -12,11 +12,11 @@ suite('functional-input', function () {
 
   test('query input', niceTests.createAndTestService(function (app) {
     app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
-      wish.acceptInput(wish.generateSchema({
+      wish.acceptInput({
         "bar": {
           "type": "string"
         }
-      })),
+      }),
       function (context, callback) {
         context.internal.input.bar.should.equal("baz");
         callback(undefined, context);
@@ -34,11 +34,11 @@ suite('functional-input', function () {
 
   test('basic form input (application/x-www-form-urlencoded)', niceTests.createAndTestService(function (app) {
     app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
-      wish.acceptInput(wish.generateSchema({
+      wish.acceptInput({
         "bar": {
           "type": "string"
         }
-      })),
+      }),
       function (context, callback) {
         context.internal.input.bar.should.equal("baz");
         callback(undefined, context);
@@ -60,11 +60,11 @@ suite('functional-input', function () {
 
   test('json input (application/json)', niceTests.createAndTestService(function (app) {
     app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
-      wish.acceptInput(wish.generateSchema({
+      wish.acceptInput({
         "bar": {
           "type": "string"
         }
-      })),
+      }),
       function (context, callback) {
         context.internal.input.bar.should.equal("baz");
         callback(undefined, context);
@@ -86,12 +86,12 @@ suite('functional-input', function () {
 
   test('constraint violation => HTTP 400 bad request', niceTests.createAndTestService(function (app) {
     app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
-      wish.acceptInput(wish.generateSchema({
+      wish.acceptInput({
         "bar": {
           "type": "string",
           maxLength: 1
         }
-      })),
+      }),
       function (context, callback) {
         context.internal.input.bar.should.equal("baz");
         callback(undefined, context);
@@ -109,11 +109,11 @@ suite('functional-input', function () {
 
   test('unexpected input => HTTP 400 bad request', niceTests.createAndTestService(function (app) {
     app.post(TEST_PATH, wish.composeContextualizedRequestHandler(wish.generateOkResponder(),
-      wish.acceptInput(wish.generateSchema({
+      wish.acceptInput({
         "bar": {
           "type": "string"
         }
-      })),
+      }),
       function (context, callback) {
         context.internal.input.bar.should.equal("baz");
         callback(undefined, context);
