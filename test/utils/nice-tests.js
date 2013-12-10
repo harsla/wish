@@ -5,14 +5,12 @@ var LOCALHOST = "localhost",
 var _ = require("underscore"),
   should = require("should"),
   httpClient = require("./http-client.js"),
-  express = require("express"),
+  wish = require("../../lib/wish.js"),
   nice_tests = module.exports;
 
 nice_tests.createAndTestService = function (serviceConfigurator, testData) {
   return function (done) {
-    var server, app = express();
-    app.use(express.urlencoded());
-    app.use(express.json());
+    var server, app = wish.generateApp();
     serviceConfigurator(app);
     server = app.listen(TEST_PORT, function () {
       httpClient.request(testData.request.method, LOCALHOST, TEST_PORT, testData.request.path, testData.request.headers,
