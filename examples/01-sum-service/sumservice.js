@@ -8,6 +8,9 @@ var wish = require("../../lib/wish.js"),
  *
  * HTTP GET http://localhost:8080/sum?x=6&y=-9
  * HTTP 400 {"error":"unacceptable request data"}
+ *
+ * HTTP GET http://localhost:8080/sum?x=92&y=9
+ * HTTP 400 {"error":"x may not equal 92"}
  */
 
 app.get("/sum", wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
@@ -24,6 +27,9 @@ app.get("/sum", wish.composeContextualizedRequestHandler(wish.generateContextRes
     }
   }),
   function (context, callback) {
+    if (context.internal.input.x === 92) {
+      callback(wish.generateError(wish.constants.HTTP_BAD_REQUEST, "x may not equal 92"), context);
+    }
     context.sum = context.internal.input.x + context.internal.input.y;
     callback(undefined, context);
   }));
