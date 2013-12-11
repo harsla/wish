@@ -1,0 +1,4 @@
+Wish Framework Manual
+
+1. contextualized request handler
+2. request input validation
