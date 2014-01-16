@@ -7,14 +7,12 @@ var _ = require("underscore"),
 
 wish.log.level = constants.LOG_WARN;
 
-suite('functional-rdbms', function () {
+suite('rdbms-integration', function () {
 
   var TEST_PATH = "/foo";
 
-  _.each(["mysql"], function (rdbmsName) {
-    test('select now', function () {
-      wish.composeContextualizedRequestHandler(wish.generateOkResponder())({}, {end: function () {}});
-    });
+  test('select now', function () {
+    wish.composeContextualizedRequestHandler(wish.generateOkResponder())({}, {end: function () {}});
   });
 
 });
