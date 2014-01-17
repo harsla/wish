@@ -16,7 +16,7 @@ suite('functional-rdbms', function () {
 
   test('connect to database', function (done) {
     var context = wish.createContext();
-    wish.configureDatabase({name: "baz", connect: function (callback) { callback(5); }});
+    wish.configureDatabase({name: "baz", connect: function (callback) { callback(undefined, 5); }});
     wish.connectToDatabase("baz")(context, function () {
       context.internal.databaseConnections.baz.should.equal(5);
       done();
