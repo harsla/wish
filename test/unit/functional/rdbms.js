@@ -112,7 +112,23 @@ suite('functional-rdbms', function () {
       }
     }); }});
     var context = wish.createContext();
-    wish.sql("zip", "select 1", [], function (context, resultSet, callback) {
+    wish.sql("zip", "select 99", [], function (context, resultSet, callback) {
+      resultSet[0].value.should.equal(99);
+      callback();
+    })(context, function () {
+      done();
+    });
+  });
+
+  test('implicit database connection to default database', function (done) {
+    wish.resetState();
+    wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
+      sql: function (query, parameters, callback) {
+        callback(undefined, [{value: 99}]);
+      }
+    }); }});
+    var context = wish.createContext();
+    wish.sql("select 99", [], function (context, resultSet, callback) {
       resultSet[0].value.should.equal(99);
       callback();
     })(context, function () {
