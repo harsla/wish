@@ -104,4 +104,20 @@ suite('functional-rdbms', function () {
     });
   });
 
+  test('implicit database connection', function (done) {
+    wish.resetState();
+    wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
+      sql: function (query, parameters, callback) {
+        callback(undefined, [{value: 99}]);
+      }
+    }); }});
+    var context = wish.createContext();
+    wish.sql("zip", "select 1", [], function (context, resultSet, callback) {
+      resultSet[0].value.should.equal(99);
+      callback();
+    })(context, function () {
+      done();
+    });
+  });
+
 });
