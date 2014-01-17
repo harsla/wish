@@ -20,7 +20,7 @@ suite('rdbms-integration', function () {
         Object.keys(context.internal.databaseConnections).indexOf("mysql").should.equal(0);
         callback(undefined, context);
       },
-      wish.sql("mysql", "SELECT 1 AS foo", [], function (context, resultSet, callback) {
+      wish.sql("mysql", "SELECT ? AS foo", [1], function (context, resultSet, callback) {
         context.foo = resultSet[0].foo;
         callback();
       }),
