@@ -27,7 +27,7 @@ suite('functional-rdbms', function () {
     var context = wish.createContext(),
       closeCalls = 0;
     context.internal.databaseConnections.woop = {
-      close: function (callback) { closeCalls += 1; callback(); }
+      close: function () { closeCalls += 1; }
     };
     wish.disconnectFromDatabase("woop")(context, function () {
       closeCalls.should.equal(1);
@@ -43,10 +43,10 @@ suite('functional-rdbms', function () {
     context.internal.databaseConnections.paz = {
       sql: function (query, parameters, callback) {
         queryInvocation += 1;
-        callback([{value: 1}]);
+        callback(undefined, [{value: 1}]);
       }
     };
-    wish.sql("paz", "select 1", [], function (resultSet, callback) {
+    wish.sql("paz", "select 1", [], function (context, resultSet, callback) {
       resultSet[0].value.should.equal(1);
       sawResult += 1;
       callback();
