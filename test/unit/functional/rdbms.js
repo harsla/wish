@@ -57,4 +57,51 @@ suite('functional-rdbms', function () {
     });
   });
 
+  test('connect to default database', function (done) {
+    wish.resetState();
+    var context = wish.createContext();
+    wish.configureDatabase({name: "baz", connect: function (callback) { callback(undefined, 5); }});
+    wish.connectToDatabase()(context, function () {
+      context.internal.databaseConnections.baz.should.equal(5);
+      done();
+    });
+  });
+
+  test('disconnect from default database', function (done) {
+    wish.resetState();
+    var context = wish.createContext(),
+      closeCalls = 0;
+    context.internal.databaseConnections.woop = {
+      close: function () { closeCalls += 1; }
+    };
+    wish.defaultDatabaseName = "woop";
+    wish.disconnectFromDatabase()(context, function () {
+      closeCalls.should.equal(1);
+      should.equal(context.internal.databaseConnections.woop, undefined);
+      done();
+    });
+  });
+
+  test('query the default database', function (done) {
+    var context = wish.createContext(),
+      queryInvocation = 0,
+      sawResult = 0;
+    context.internal.databaseConnections.paz = {
+      sql: function (query, parameters, callback) {
+        queryInvocation += 1;
+        callback(undefined, [{value: 1}]);
+      }
+    };
+    wish.defaultDatabaseName = "paz";
+    wish.sql("select 1", [], function (context, resultSet, callback) {
+      resultSet[0].value.should.equal(1);
+      sawResult += 1;
+      callback();
+    })(context, function () {
+      should.equal(sawResult, 1);
+      should.equal(queryInvocation, 1);
+      done();
+    });
+  });
+
 });
