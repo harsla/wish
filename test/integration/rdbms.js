@@ -11,8 +11,15 @@ suite('rdbms-integration', function () {
 
   var TEST_PATH = "/foo";
 
-  test('select now', function () {
-    wish.composeContextualizedRequestHandler(wish.generateOkResponder())({}, {end: function () {}});
+  test('select 1', function (done) {
+    wish.configureDatabase(wish.mysql.configure("mysql", "mysql://wish:wish@localhost/wish"));
+    wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      wish.connectToDatabase("mysql")
+      )({}, {write: function () {},
+      end: function () {
+        this.statusCode.should.equal(200);
+        done();
+      }});
   });
 
 });

@@ -57,11 +57,4 @@ suite('functional-rdbms', function () {
     });
   });
 
-  /*
-    configureDatabase puts a database facade into the wish object
-    connectToDatabase gets a database connection from the database facade and then puts it into the context
-    disconnectFromDatabase calls close() on a database connection and then removes it from the context
-    sql calls sql() on a database connection and invokes a callback with the result
-   */
-
 });
