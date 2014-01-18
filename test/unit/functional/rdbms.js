@@ -165,4 +165,34 @@ suite('functional-rdbms', function () {
       }});
   });
 
+  test('gracefully handle implicit AND explicit database disconnect', function (done) {
+    var closeCalls = 0;
+    wish.resetState();
+    wish.configureDatabase({
+      name: "mockdb",
+      connect: function (callback) { callback(undefined, {
+        sql: function (query, parameters, callback) {
+          callback(undefined, [{value: 99}]);
+        },
+        close: function () { closeCalls += 1; }
+      }); }
+    });
+    wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
+      function (context, callback) {
+        context.internal.finalizers.push(function (context, callback) {
+          closeCalls.should.equal(1);
+          done();
+        });
+        callback(undefined, context);
+      },
+      wish.sql("do something", [], function (context, resultSet, callback) {
+        callback();
+      }),
+      wish.disconnectFromDatabase()
+      )({}, {write: function () {},
+      end: function () {
+        this.statusCode.should.equal(200);
+      }});
+  });
+
 });
