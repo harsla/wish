@@ -137,8 +137,7 @@ suite('functional-rdbms', function () {
   });
 
   test('implicit database disconnect', function (done) {
-    var closeCalls = 0,
-      here = 0;
+    var closeCalls = 0;
     wish.resetState();
     wish.configureDatabase({
       name: "mockdb",
