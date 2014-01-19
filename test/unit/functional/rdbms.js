@@ -137,7 +137,8 @@ suite('functional-rdbms', function () {
   });
 
   test('implicit database disconnect', function (done) {
-    var closeCalls = 0;
+    var closeCalls = 0,
+      here = 0;
     wish.resetState();
     wish.configureDatabase({
       name: "mockdb",
@@ -149,13 +150,11 @@ suite('functional-rdbms', function () {
       }); }
     });
     wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
-      function (context, callback) {
-        context.internal.finalizers.push(function (context, callback) {
-          closeCalls.should.equal(1);
-          done();
-        });
+      wish.buildStep(wish.nullStep(), function PAIN(context, callback) {
+        closeCalls.should.equal(1);
+        done();
         callback(undefined, context);
-      },
+      }),
       wish.sql("do something", [], function (context, resultSet, callback) {
         callback();
       })
@@ -178,13 +177,11 @@ suite('functional-rdbms', function () {
       }); }
     });
     wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
-      function (context, callback) {
-        context.internal.finalizers.push(function (context, callback) {
-          closeCalls.should.equal(1);
-          done();
-        });
+      wish.buildStep(wish.nullStep(), function (context, callback) {
+        closeCalls.should.equal(1);
+        done();
         callback(undefined, context);
-      },
+      }),
       wish.sql("do something", [], function (context, resultSet, callback) {
         callback();
       }),
