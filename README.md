@@ -5,46 +5,59 @@ a Node.js web service framework
 
 What is it?
 -----------
-There are three tiers of framework available in Wish.
-1. a functional, asynchronous convenience package which simplifies callback stacks, trivializes service filters, and makes SQL fun
-2. a declarative DSL for rapid definition and implementation of RESTful services, database entities, and all sorts of HATEOAS goodness
-3. an exapandable module system which allows reuse of boilerplate such as user entities, authentication, authorization, and audit logging
+The Wish framework consists of three levels:
 
-Each tier builds upon the next. Ignore the bits you hate. Use the bits you like. Expand upon the bits you love.
+1. functional syntactical sugar which replaces nested callbacks with a chain of responsibility and tightly integrates SQL
+2. a declarative DSL for rapid definition and implementation of hypermedia APIs
+3. a module system which allows reuse of boilerplate such as user entities, authentication, authorization, and audit logging
 
-Wish is strictly RESTful. Wish is pure Javascript. Wish doesn't concern itself with display logic.
+Use the levels you like but ignore the others. Note that the higher levels depend upon the lower levels.
+
+Core Edicts
+-----------
+1. Wish is pure Javascript.
+2. Wish adheres strictly to REST and HATEOAS design principles.
+3. Wish is Test-Driven.
 
 How do I Wish?
 --------------
-There will be tutorial videos and example projects. For now, just read the unit tests. Sorry!
+TODO: elaborate
+
+1. add the package to your package.json or npm install wish
+2. import wish
+3. wish away!
 
 How does the Wish project work?
 -------------------------------
-* Wish lives on GutHub.
-* Wish doesn't have a build process yet, but soon.
-* Wish doesn't have continuous integration yet, but soon.
-* Wish isn't published yet, but soon.
-* Wish uses jslint to validate all Javascript. Yes, the perverse one.
+clone the git repository
 
-Who created Wish?
------------------
-Wish is the result of Kyle W. Cartmell getting really mad about rework and falling very much in love with Node.js and the good parts book by Mr. Crockford.
+    git clone https://github.com/KyleCartmell/wish.git
+
+install dependencies
+
+    npm install
+
+run unit tests
+
+    npm test
+
+run integration tests
+
+    npm run-script integration-test
+
+perform static analysis
+
+    npm run-script static-analysis
+
+TODO:
+
+* continuous integration
+* npm published
 
 How can I help?
 ---------------
-Look at the Wish backlog and/or talk to Kyle. Or don't. Write a thing or fix a thing. Make sure Wish still builds. Make sure the test suite still passes. Make sure jslint isn't angry with you. Write tests for your stuff. Send a pull request to Kyle. BOOM!
-
-Gosh that sounds like a lot of work. If it's any consolation Kyle will probably thank you profusely for your help and list you as a co-author in the documentation. Not exactly a great honor, but still. Heck, if you're an Arizona resident Kyle will even buy you a beer at four peaks.
-
-Strong Foundational Opinions
-----------------------------
-The following opinions belong to the author of this framework. They underlie the design of the wish framework.
-You are free to agree or disagree, but if you disagree you will likely find deep sadness in the use of wish.
-No effort will be wasted upon the defense of these opinions.
-Cries for change, screams of anger, or pleas for mercy shall are doomed to fall on deaf ears. You have been warned.
-1. Strict adherence to REST is extremely valuable.
-2. SQL code should live alongside business logic rather than being segregated or abstracted away.
-3. Human meatbrains should be allowed to express logic in an imperative form.
-4. Test-Driven Development is the key to a well-engineered software solution.
-5. High-level documentation and self-documenting code is critical. Code comments, not so much.
-6. Common tasks must be trivial. Uncommon tasks must be easy. Rare tasks must be possible.
+* find or create an issue in the github repository
+* fork the project to your own github repository
+* do some work and include relevant tests and documentation
+* submit a pull request
+* feel free to email kylecartmell@gmail.com
