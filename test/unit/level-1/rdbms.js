@@ -22,6 +22,7 @@ var _ = require("underscore"),
     },
     resetState: function () {
       this.databaseConnection.closeInvocationCount = 0;
+      this.databaseConnection.sqlInvocationCount = 0;
     }
   };
 
@@ -30,7 +31,7 @@ wish.log.level = constants.LOG_WARN;
 suite('functional-rdbms', function () {
   setup(function () {
     wish.resetState();
-    //testDatabaseFacade.resetState();
+    testDatabaseFacade.resetState();
   });
 
   test('configure database', function () {
@@ -83,131 +84,110 @@ suite('functional-rdbms', function () {
   });
 
   test('connect to default database', function (done) {
+    // let
     var context = wish.createContext();
-    wish.configureDatabase({name: "baz", connect: function (callback) { callback(undefined, 5); }});
+    // given
+    wish.configureDatabase(testDatabaseFacade);
     wish.connectToDatabase()(context, function () {
-      context.internal.databaseConnections.baz.should.equal(5);
+      // expect
+      context.internal.databaseConnections.testDatabase.should.equal(testDatabaseFacade.databaseConnection);
       done();
     });
   });
 
   test('disconnect from default database', function (done) {
-    var context = wish.createContext(),
-      closeCalls = 0;
-    context.internal.databaseConnections.woop = {
-      close: function () { closeCalls += 1; }
-    };
-    wish.defaultDatabaseName = "woop";
-    wish.disconnectFromDatabase()(context, function () {
-      closeCalls.should.equal(1);
-      should.equal(context.internal.databaseConnections.woop, undefined);
-      done();
+    // let
+    var context = wish.createContext();
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.connectToDatabase()(context, function () {
+      wish.disconnectFromDatabase("testDatabase")(context, function () {
+        // expect
+        testDatabaseFacade.databaseConnection.closeInvocationCount.should.equal(1);
+        should.equal(context.internal.databaseConnections.testDatabaseFacade, undefined);
+        done();
+      });
     });
   });
 
   test('query the default database', function (done) {
-    var context = wish.createContext(),
-      queryInvocation = 0,
-      sawResult = 0;
-    context.internal.databaseConnections.paz = {
-      sql: function (query, parameters, callback) {
-        queryInvocation += 1;
-        callback(undefined, [{value: 1}]);
-      }
-    };
-    wish.defaultDatabaseName = "paz";
-    wish.sql("select 1", [], function (context, resultSet, callback) {
-      resultSet[0].value.should.equal(1);
-      sawResult += 1;
-      callback();
-    })(context, function () {
-      should.equal(sawResult, 1);
-      should.equal(queryInvocation, 1);
-      done();
+    // let
+    var context = wish.createContext();
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.connectToDatabase("testDatabase")(context, function () {
+      wish.sql("SELECT 1", [], function (context, resultSet, callback) {
+        // expect
+        resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
+        should.equal(testDatabaseFacade.databaseConnection.sqlInvocationCount, 1);
+        done();
+      })(context, undefined);
     });
   });
 
   test('implicit database connection', function (done) {
-    wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
-      sql: function (query, parameters, callback) {
-        callback(undefined, [{value: 99}]);
-      }
-    }); }});
+    // let
     var context = wish.createContext();
-    wish.sql("zip", "select 99", [], function (context, resultSet, callback) {
-      resultSet[0].value.should.equal(99);
-      callback();
-    })(context, function () {
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.sql("testDatabase", "SELECT 1", [], function (context, resultSet, callback) {
+      // expect
+      resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
+      should.equal(testDatabaseFacade.databaseConnection.sqlInvocationCount, 1);
       done();
-    });
+    })(context, undefined);
   });
 
   test('implicit database connection to default database', function (done) {
-    wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
-      sql: function (query, parameters, callback) {
-        callback(undefined, [{value: 99}]);
-      }
-    }); }});
+    // let
     var context = wish.createContext();
-    wish.sql("select 99", [], function (context, resultSet, callback) {
-      resultSet[0].value.should.equal(99);
-      callback();
-    })(context, function () {
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.sql("SELECT 1", [], function (context, resultSet, callback) {
+      // expect
+      resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
+      should.equal(testDatabaseFacade.databaseConnection.sqlInvocationCount, 1);
       done();
-    });
+    })(context, undefined);
   });
 
   test('implicit database disconnect', function (done) {
-    var closeCalls = 0;
-    wish.configureDatabase({
-      name: "mockdb",
-      connect: function (callback) { callback(undefined, {
-        sql: function (query, parameters, callback) {
-          callback(undefined, [{value: 99}]);
-        },
-        close: function () { closeCalls += 1; }
-      }); }
-    });
+    // let
+    wish.configureDatabase(testDatabaseFacade);
+    // given
     wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
-      wish.buildStep(wish.nullStep(), function PAIN(context, callback) {
-        closeCalls.should.equal(1);
+      wish.buildStep(wish.nullStep(), function (context, callback) {
+        // expect
+        testDatabaseFacade.databaseConnection.sqlInvocationCount.should.equal(1);
+        testDatabaseFacade.databaseConnection.closeInvocationCount.should.equal(1);
         done();
-        callback(undefined, context);
       }),
       wish.sql("do something", [], function (context, resultSet, callback) {
+        resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
         callback();
       })
       )({}, {write: function () {},
-      end: function () {
-        this.statusCode.should.equal(200);
-      }});
+      end: function () {} });
   });
 
   test('gracefully handle implicit AND explicit database disconnect', function (done) {
-    var closeCalls = 0;
-    wish.configureDatabase({
-      name: "mockdb",
-      connect: function (callback) { callback(undefined, {
-        sql: function (query, parameters, callback) {
-          callback(undefined, [{value: 99}]);
-        },
-        close: function () { closeCalls += 1; }
-      }); }
-    });
+    // let
+    wish.configureDatabase(testDatabaseFacade);
+    // given
     wish.composeContextualizedRequestHandler(wish.generateContextResponder(),
       wish.buildStep(wish.nullStep(), function (context, callback) {
-        closeCalls.should.equal(1);
+        // expect
+        testDatabaseFacade.databaseConnection.sqlInvocationCount.should.equal(1);
+        testDatabaseFacade.databaseConnection.closeInvocationCount.should.equal(1);
         done();
-        callback(undefined, context);
       }),
       wish.sql("do something", [], function (context, resultSet, callback) {
+        resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
         callback();
       }),
       wish.disconnectFromDatabase()
       )({}, {write: function () {},
-      end: function () {
-        this.statusCode.should.equal(200);
-      }});
+      end: function () {} });
   });
 
 });
