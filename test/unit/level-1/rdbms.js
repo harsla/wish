@@ -11,11 +11,17 @@ var _ = require("underscore"),
     },
     // the following properties are for unit testing and would not normally appear in a database facade
     databaseConnection: {
-      closeInvokationCount: 0,
-      close: function () { this.closeInvokationCount += 1; }
+      closeInvocationCount: 0,
+      close: function () { this.closeInvocationCount += 1; },
+      sqlInvocationCount: 0,
+      sql: function (query, parameters, callback) {
+        this.sqlInvocationCount += 1;
+        callback(undefined, this.resultSet);
+      },
+      resultSet: {}
     },
     resetState: function () {
-      this.databaseConnection.closeInvokationCount = 0;
+      this.databaseConnection.closeInvocationCount = 0;
     }
   };
 
@@ -54,7 +60,7 @@ suite('functional-rdbms', function () {
     wish.connectToDatabase("testDatabase")(context, function () {
       wish.disconnectFromDatabase("testDatabase")(context, function () {
         // expect
-        testDatabaseFacade.databaseConnection.closeInvokationCount.should.equal(1);
+        testDatabaseFacade.databaseConnection.closeInvocationCount.should.equal(1);
         should.equal(context.internal.databaseConnections.testDatabaseFacade, undefined);
         done();
       });
@@ -62,23 +68,19 @@ suite('functional-rdbms', function () {
   });
 
   test('query the database', function (done) {
-    var context = wish.createContext(),
-      queryInvocation = 0,
-      sawResult = 0;
-    context.internal.databaseConnections.paz = {
-      sql: function (query, parameters, callback) {
-        queryInvocation += 1;
-        callback(undefined, [{value: 1}]);
-      }
-    };
-    wish.sql("paz", "select 1", [], function (context, resultSet, callback) {
-      resultSet[0].value.should.equal(1);
-      sawResult += 1;
-      callback();
-    })(context, function () {
-      should.equal(sawResult, 1);
-      should.equal(queryInvocation, 1);
-      done();
+    // let
+    var context = wish.createContext();
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.connectToDatabase("testDatabase")(context, function () {
+      wish.sql("testDatabase", "SELECT 1", [], function (context, resultSet, callback) {
+        // expect
+        resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
+        callback();
+      })(context, function () {
+        should.equal(testDatabaseFacade.databaseConnection.sqlInvocationCount, 1);
+        done();
+      });
     });
   });
 
