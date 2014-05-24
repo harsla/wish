@@ -76,11 +76,9 @@ suite('functional-rdbms', function () {
       wish.sql("testDatabase", "SELECT 1", [], function (context, resultSet, callback) {
         // expect
         resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
-        callback();
-      })(context, function () {
         should.equal(testDatabaseFacade.databaseConnection.sqlInvocationCount, 1);
         done();
-      });
+      })(context, undefined);
     });
   });
 
