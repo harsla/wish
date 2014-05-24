@@ -166,8 +166,8 @@ suite('functional-rdbms', function () {
         resultSet.should.equal(testDatabaseFacade.databaseConnection.resultSet);
         callback();
       })
-      )({}, {write: function () {},
-      end: function () {} });
+    )({}, {write: _.constant(),
+      end: _.constant() });
   });
 
   test('gracefully handle implicit AND explicit database disconnect', function (done) {
@@ -186,8 +186,8 @@ suite('functional-rdbms', function () {
         callback();
       }),
       wish.disconnectFromDatabase()
-      )({}, {write: function () {},
-      end: function () {} });
+    )({}, {write: _.constant(),
+      end: _.constant() });
   });
 
 });
