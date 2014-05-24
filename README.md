@@ -18,6 +18,7 @@ Core Edicts
 1. Wish is pure Javascript.
 2. Wish adheres strictly to REST and HATEOAS design principles.
 3. Wish is Test-Driven.
+3. Wish (will) use git-flow.
 
 How do I Wish?
 --------------

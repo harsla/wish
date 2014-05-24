@@ -3,36 +3,61 @@
 var _ = require("underscore"),
   constants = require("../../../lib/constants.js"),
   should = require("should"),
-  wish = require("../../../lib/wish.js");
+  wish = require("../../../lib/wish.js"),
+  testDatabaseFacade = { // a faked out database driver for unit testing
+    name: "testDatabase",
+    connect: function (callback) {
+      callback(undefined, this.databaseConnection);
+    },
+    // the following properties are for unit testing and would not normally appear in a database facade
+    databaseConnection: {
+      closeInvokationCount: 0,
+      close: function () { this.closeInvokationCount += 1; }
+    },
+    resetState: function () {
+      this.databaseConnection.closeInvokationCount = 0;
+    }
+  };
 
 wish.log.level = constants.LOG_WARN;
 
 suite('functional-rdbms', function () {
+  setup(function () {
+    wish.resetState();
+    //testDatabaseFacade.resetState();
+  });
 
   test('configure database', function () {
+    // given
     wish.configureDatabase({name: "foo"});
+    // expect
     wish.databases.foo.name.should.equal("foo");
   });
 
   test('connect to database', function (done) {
+    // let
     var context = wish.createContext();
-    wish.configureDatabase({name: "baz", connect: function (callback) { callback(undefined, 5); }});
-    wish.connectToDatabase("baz")(context, function () {
-      context.internal.databaseConnections.baz.should.equal(5);
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.connectToDatabase("testDatabase")(context, function () {
+      // expect
+      context.internal.databaseConnections.testDatabase.should.equal(testDatabaseFacade.databaseConnection);
       done();
     });
   });
 
   test('disconnect from database', function (done) {
-    var context = wish.createContext(),
-      closeCalls = 0;
-    context.internal.databaseConnections.woop = {
-      close: function () { closeCalls += 1; }
-    };
-    wish.disconnectFromDatabase("woop")(context, function () {
-      closeCalls.should.equal(1);
-      should.equal(context.internal.databaseConnections.woop, undefined);
-      done();
+    // let
+    var context = wish.createContext();
+    // given
+    wish.configureDatabase(testDatabaseFacade);
+    wish.connectToDatabase("testDatabase")(context, function () {
+      wish.disconnectFromDatabase("testDatabase")(context, function () {
+        // expect
+        testDatabaseFacade.databaseConnection.closeInvokationCount.should.equal(1);
+        should.equal(context.internal.databaseConnections.testDatabaseFacade, undefined);
+        done();
+      });
     });
   });
 
@@ -58,7 +83,6 @@ suite('functional-rdbms', function () {
   });
 
   test('connect to default database', function (done) {
-    wish.resetState();
     var context = wish.createContext();
     wish.configureDatabase({name: "baz", connect: function (callback) { callback(undefined, 5); }});
     wish.connectToDatabase()(context, function () {
@@ -68,7 +92,6 @@ suite('functional-rdbms', function () {
   });
 
   test('disconnect from default database', function (done) {
-    wish.resetState();
     var context = wish.createContext(),
       closeCalls = 0;
     context.internal.databaseConnections.woop = {
@@ -105,7 +128,6 @@ suite('functional-rdbms', function () {
   });
 
   test('implicit database connection', function (done) {
-    wish.resetState();
     wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
       sql: function (query, parameters, callback) {
         callback(undefined, [{value: 99}]);
@@ -121,7 +143,6 @@ suite('functional-rdbms', function () {
   });
 
   test('implicit database connection to default database', function (done) {
-    wish.resetState();
     wish.configureDatabase({name: "zip", connect: function (callback) { callback(undefined, {
       sql: function (query, parameters, callback) {
         callback(undefined, [{value: 99}]);
@@ -138,7 +159,6 @@ suite('functional-rdbms', function () {
 
   test('implicit database disconnect', function (done) {
     var closeCalls = 0;
-    wish.resetState();
     wish.configureDatabase({
       name: "mockdb",
       connect: function (callback) { callback(undefined, {
@@ -165,7 +185,6 @@ suite('functional-rdbms', function () {
 
   test('gracefully handle implicit AND explicit database disconnect', function (done) {
     var closeCalls = 0;
-    wish.resetState();
     wish.configureDatabase({
       name: "mockdb",
       connect: function (callback) { callback(undefined, {
