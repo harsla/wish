@@ -9,160 +9,115 @@ wish.log.level = constants.LOG_WARN;
 
 suite('request-control-flow', function () {
 
-  test('normal flow', function (done) {
-    // let
-    var x = 0,
-      assertMilestone = function (expectedMilestone) {
-        x += 1;
-        x.should.equal(expectedMilestone);
-      }, milestoneStep = function (expectedMilestone) {
-        return function (context, callback) {
-          assertMilestone(expectedMilestone);
+  var tracker = {
+    currentMilestone: 0,
+    assertMilestone: function (expectedMilestone) {
+      this.currentMilestone += 1;
+      this.currentMilestone.should.equal(expectedMilestone);
+    },
+    milestoneStep: function (expectedMilestone, testDoneCallback) {
+      var that = this;
+      return function (context, callback) {
+        that.assertMilestone(expectedMilestone);
+        if (testDoneCallback) {
+          testDoneCallback();
+        }
+        if (callback) {
           callback(undefined, context);
         }
-      },
-      milestoneFinalizer = function (milestone) {
-        assertMilestone(milestone);
-          done();
-      };
-    // given, expect
+      }
+    },
+    milestoneResponder: function (expectedMilestone, testDoneCallback) {
+      var that = this;
+      return function (error, context) {
+        that.assertMilestone(expectedMilestone);
+        if (testDoneCallback) {
+          testDoneCallback();
+        }
+      }
+    },
+    installMilestoneErrorHandler: function (expectedMilestone, testDoneCallback) {
+      if(wish._generalErrorHandler) {
+        assert.fail("some jerk tried to install more than one milestone err handler");
+      }
+      wish._generalErrorHandler = wish.generalErrorHandler;
+      var that = this;
+      wish.generalErrorHandler = function (error, context) {
+        that.assertMilestone(expectedMilestone);
+        if (testDoneCallback) {
+          testDoneCallback();
+        }
+        wish._generalErrorHandler(error, context);
+      }
+    }
+  },
+  assertFailure = function () {
+    assert.fail("This function should never be called.");
+  },
+  mockRequest = {},
+  mockResponse = {write:_.constant(), end:_.constant()};
+
+  setup(function () {
+    tracker.currentMilestone = 0;
+    if(wish._generalErrorHandler) {
+      wish.generalErrorHandler = wish._generalErrorHandler;
+      delete wish._generalErrorHandler;
+    }
+  });
+
+  test('normal flow', function (done) {
     wish.composeContextualizedRequestHandler(
-      function responder (context) {
-        assertMilestone(4);
-        done();
-      },
-      milestoneStep(1),
-      milestoneStep(2),
-      milestoneStep(3))({}, {});
+      tracker.milestoneResponder(4, done),
+      tracker.milestoneStep(1),
+      tracker.milestoneStep(2),
+      tracker.milestoneStep(3))(mockRequest, mockResponse);
   });
 
   test('faulty flow', function (done) {
-    var x = 0;
-    wish._generalErrorHandler = wish.generalErrorHandler;
-    wish.generalErrorHandler = function (error, context) {
-      x += 1;
-      x.should.equal(4);
-      wish.generalErrorHandler = wish._generalErrorHandler;
-      delete wish._generalErrorHandler;
-      wish.generalErrorHandler(error, context);
-      done();
-    }
+    tracker.installMilestoneErrorHandler(4, done);
     wish.composeContextualizedRequestHandler(
-      function responder (context) {
-        assert.fail();
-      }, function stepOne (context, callback) {
-        x += 1;
-        x.should.equal(1);
-        callback(undefined, context);
-      }, function stepTwo (context, callback) {
-        x += 1;
-        x.should.equal(2);
-        callback(undefined, context);
-      }, function stepThree (context, callback) {
-        x += 1;
-        x.should.equal(3);
+      assertFailure,
+      tracker.milestoneStep(1),
+      tracker.milestoneStep(2),
+      function stepThree (context, callback) {
+        tracker.assertMilestone(3)
         callback(wish.generateError(500,"boop"), context);
-      })({}, {write:_.constant(), end:_.constant()});
+      })(mockRequest, mockResponse);
   });
 
   test('alternate faulty flow', function (done) {
-    var x = 0;
-    wish._generalErrorHandler = wish.generalErrorHandler;
-    wish.generalErrorHandler = function (error, context) {
-      x += 1;
-      x.should.equal(2);
-      wish.generalErrorHandler = wish._generalErrorHandler;
-      delete wish._generalErrorHandler;
-      wish.generalErrorHandler(error, context);
-      done();
-    }
+    tracker.installMilestoneErrorHandler(2, done);
     wish.composeContextualizedRequestHandler(
-      function responder (context) {
-        assert.fail();
-      }, function stepOne (context, callback) {
-        x += 1;
-        x.should.equal(1);
+      assertFailure,
+      function stepOne (context, callback) {
+        tracker.assertMilestone(1)
         callback(wish.generateError(500,"boop"), context);
-      }, function stepTwo (context, callback) {
-        assert.fail();
-      }, function stepThree (context, callback) {
-        assert.fail();
-      })({}, {write:_.constant(), end:_.constant()});
+      },
+      assertFailure,
+      assertFailure
+    )(mockRequest, mockResponse);
   });
 
   test('normal flow with finalizers', function (done) {
-    var x = 0;
     wish.composeContextualizedRequestHandler(
-      function responder (context) {
-        x += 1;
-        x.should.equal(4);
-      }, wish.buildStep(function stepOne (context, callback) {
-        x += 1;
-        x.should.equal(1);
-        callback(undefined, context);
-      }, function finalizerOne (context, callback) {
-        x += 1;
-        x.should.equal(7);
-        done();
-        callback(undefined, context);
-      }), wish.buildStep(function stepTwo (context, callback) {
-        x += 1;
-        x.should.equal(2);
-        callback(undefined, context);
-      }, function finalizerTwo (context, callback) {
-        x += 1;
-        x.should.equal(6);
-        callback(undefined, context);
-      }), wish.buildStep(function stepThree (context, callback) {
-        x += 1;
-        x.should.equal(3);
-        callback(undefined, context);
-      }, function finalizerThree (context, callback) {
-        x += 1;
-        x.should.equal(5);
-        callback(undefined, context);
-      }))({}, {});
+      tracker.milestoneResponder(4),
+      wish.buildStep(tracker.milestoneStep(1), tracker.milestoneStep(7, done)),
+      wish.buildStep(tracker.milestoneStep(2), tracker.milestoneStep(6)),
+      wish.buildStep(tracker.milestoneStep(3), tracker.milestoneStep(5))
+    )(mockRequest, mockResponse);
   });
 
   test('faulty flow with finalizers', function (done) {
-    var x = 0;
-    wish._generalErrorHandler = wish.generalErrorHandler;
-    wish.generalErrorHandler = function (error, context) {
-      x += 1;
-      x.should.equal(4);
-      wish.generalErrorHandler = wish._generalErrorHandler;
-      delete wish._generalErrorHandler;
-      wish.generalErrorHandler(error, context);
-    }
+    tracker.installMilestoneErrorHandler(4, done);
     wish.composeContextualizedRequestHandler(
-        function responder (context) {
-          assert.fail();
-        }, wish.buildStep(function stepOne (context, callback) {
-          x += 1;
-          x.should.equal(1);
-          callback(undefined, context);
-        }, function finalizerOne (context, callback) {
-          x += 1;
-          x.should.equal(7);
-          done();
-          callback(undefined, context);
-        }), wish.buildStep(function stepTwo (context, callback) {
-          x += 1;
-          x.should.equal(2);
-          callback(undefined, context);
-        }, function finalizerTwo (context, callback) {
-          x += 1;
-          x.should.equal(6);
-          callback(undefined, context);
-        }), wish.buildStep(function stepThree (context, callback) {
-          x += 1;
-          x.should.equal(3);
+      assertFailure,
+      wish.buildStep(tracker.milestoneStep(1), tracker.milestoneStep(7, done)),
+      wish.buildStep(tracker.milestoneStep(2), tracker.milestoneStep(6)),
+      wish.buildStep(function stepThree (context, callback) {
+          tracker.assertMilestone(3)
           callback(wish.generateError(500,"boop"), context);
-        }, function finalizerThree (context, callback) {
-          x += 1;
-          x.should.equal(5);
-          callback(undefined, context);
-        }))({}, {write:_.constant(), end:_.constant()});
+        }, tracker.milestoneStep(5))
+      )(mockRequest, mockResponse);
   });
 
 });
