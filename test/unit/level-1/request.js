@@ -3,7 +3,8 @@
 var _ = require("underscore"),
   niceTests = require("../../utils/nice-tests.js"),
   constants = require("../../../lib/constants.js"),
-  wish = require("../../../lib/wish.js");
+  wish = require("../../../lib/wish.js"),
+  should = require("should");
 
 wish.log.level = constants.LOG_WARN;
 
@@ -12,6 +13,7 @@ suite('request-control-flow', function () {
   var tracker = {
     currentMilestone: 0,
     assertMilestone: function (expectedMilestone) {
+      console.log("asserting milestone " + expectedMilestone);
       this.currentMilestone += 1;
       this.currentMilestone.should.equal(expectedMilestone);
     },
@@ -51,8 +53,8 @@ suite('request-control-flow', function () {
       }
     }
   },
-  assertFailure = function () {
-    assert.fail("This function should never be called.");
+  assertFailure = function (msg) {
+    should.fail(msg||"This function should never be called.");
   },
   mockRequest = {},
   mockResponse = {write:_.constant(), end:_.constant()};
@@ -108,7 +110,7 @@ suite('request-control-flow', function () {
   });
 
   test('faulty flow with finalizers', function (done) {
-    tracker.installMilestoneErrorHandler(4, done);
+    tracker.installMilestoneErrorHandler(4);
     wish.composeContextualizedRequestHandler(
       assertFailure,
       wish.buildStep(tracker.milestoneStep(1), tracker.milestoneStep(7, done)),
@@ -118,6 +120,19 @@ suite('request-control-flow', function () {
           callback(wish.generateError(500,"boop"), context);
         }, tracker.milestoneStep(5))
       )(mockRequest, mockResponse);
+  });
+
+  test('alternate faulty flow with finalizers', function (done) {
+    tracker.installMilestoneErrorHandler(2);
+    wish.composeContextualizedRequestHandler(
+      assertFailure,
+      wish.buildStep(function stepThree (context, callback) {
+          tracker.assertMilestone(1)
+          callback(wish.generateError(500,"boop"), context);
+        }, tracker.milestoneStep(3, done)),
+      wish.buildStep(assertFailure, assertFailure("final two")),
+      wish.buildStep(assertFailure, assertFailure("final three"))
+    )(mockRequest, mockResponse);
   });
 
 });
