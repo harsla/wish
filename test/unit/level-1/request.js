@@ -13,7 +13,6 @@ suite('request-control-flow', function () {
   var tracker = {
     currentMilestone: 0,
     assertMilestone: function (expectedMilestone) {
-      console.log("asserting milestone " + expectedMilestone);
       this.currentMilestone += 1;
       this.currentMilestone.should.equal(expectedMilestone);
     },
@@ -31,11 +30,12 @@ suite('request-control-flow', function () {
     },
     milestoneResponder: function (expectedMilestone, testDoneCallback) {
       var that = this;
-      return function (error, context) {
+      return function (error, context, callback) {
         that.assertMilestone(expectedMilestone);
         if (testDoneCallback) {
           testDoneCallback();
         }
+        callback(error, context);
       }
     },
     installMilestoneErrorHandler: function (expectedMilestone, testDoneCallback) {
@@ -44,12 +44,12 @@ suite('request-control-flow', function () {
       }
       wish._generalErrorHandler = wish.generalErrorHandler;
       var that = this;
-      wish.generalErrorHandler = function (error, context) {
+      wish.generalErrorHandler = function (error, context, callback) {
         that.assertMilestone(expectedMilestone);
         if (testDoneCallback) {
           testDoneCallback();
         }
-        wish._generalErrorHandler(error, context);
+        wish._generalErrorHandler(error, context, callback);
       }
     }
   },
@@ -130,8 +130,8 @@ suite('request-control-flow', function () {
           tracker.assertMilestone(1)
           callback(wish.generateError(500,"boop"), context);
         }, tracker.milestoneStep(3, done)),
-      wish.buildStep(assertFailure, assertFailure("final two")),
-      wish.buildStep(assertFailure, assertFailure("final three"))
+      wish.buildStep(assertFailure, assertFailure),
+      wish.buildStep(assertFailure, assertFailure)
     )(mockRequest, mockResponse);
   });
 
